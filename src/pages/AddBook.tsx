@@ -1,166 +1,201 @@
-import { useState } from "react";
-import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+
+import { useForm, SubmitHandler } from "react-hook-form";
+import { useCreateBookMutation } from "@/redux/Api/baseApi";
+
+import { toast } from "react-toastify";
+
+type BookFormValues = {
+  title: string;
+  author: string;
+  genre: string;
+  isbn: string;
+  description?: string;
+  copies: number;
+  available: boolean;
+};
 
 function AddBook() {
-  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    title: "",
-    author: "",
-    genre: "",
-    isbn: "",
-    description: "",
-    copies: 1,
-    available: true,
+  const form = useForm<BookFormValues>({
+    defaultValues: {
+      title: "",
+      author: "",
+      genre: "",
+      isbn: "",
+      description: "",
+      copies: 1,
+      available: true,
+    },
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : type === "number" ? Number(value) : value,
-    }));
-  };
+  const [createBook] = useCreateBookMutation();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit: SubmitHandler<BookFormValues> = async (values) => {
+    // Trigger validation programmatically
+    const isValid = await form.trigger();
 
-    if (!form.title || !form.author || !form.genre || !form.isbn) {
-      alert("Please fill all required fields.");
+    if (!isValid) {
+      toast.error("Please fill out all required fields!");
       return;
     }
 
-    const newBook: Book = {
-      id: Date.now().toString(), // simple unique id
-      title: form.title,
-      author: form.author,
-      genre: form.genre,
-      isbn: form.isbn,
-      description: form.description,
-      copies: form.copies,
-      available: form.available,
-    };
-
-    dispatch(addBook(newBook));
-    navigate("/books"); // redirect to books list
+    try {
+      await createBook(values).unwrap();
+      toast.success("Your book has been saved!");
+      navigate("/");
+      form.reset();
+    } catch (error) {
+      toast.error("Failed to save book. Try again.");
+      console.error(error);
+    }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10 p-4 border rounded shadow">
       <h2 className="text-xl font-semibold mb-4">Add New Book</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* same form fields as before */}
-        <div>
-          <label className="block font-medium mb-1" htmlFor="title">
-            Title <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="title"
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {/* Title */}
+          <FormField
+            control={form.control}
             name="title"
-            value={form.title}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            required
+            rules={{ required: "Title is required" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Title <span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Book title" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        {/* ...repeat for author, genre, isbn, description, copies */}
-        <div>
-          <label className="block font-medium mb-1" htmlFor="author">
-            Author <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="author"
+
+          {/* Author */}
+          <FormField
+            control={form.control}
             name="author"
-            value={form.author}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            required
+            rules={{ required: "Author is required" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Author <span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Author name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block font-medium mb-1" htmlFor="genre">
-            Genre <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="genre"
+          {/* Genre */}
+          <FormField
+            control={form.control}
             name="genre"
-            value={form.genre}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            required
+            rules={{ required: "Genre is required" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Genre <span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="Genre" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block font-medium mb-1" htmlFor="isbn">
-            ISBN <span className="text-red-600">*</span>
-          </label>
-          <input
-            type="text"
-            id="isbn"
+          {/* ISBN */}
+          <FormField
+            control={form.control}
             name="isbn"
-            value={form.isbn}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            required
+            rules={{ required: "ISBN is required" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  ISBN <span className="text-red-600">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input placeholder="ISBN" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block font-medium mb-1" htmlFor="description">
-            Description
-          </label>
-          <textarea
-            id="description"
+          {/* Description */}
+          <FormField
+            control={form.control}
             name="description"
-            value={form.description}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-            rows={3}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Description" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div>
-          <label className="block font-medium mb-1" htmlFor="copies">
-            Copies
-          </label>
-          <input
-            type="number"
-            id="copies"
+          {/* Copies */}
+          <FormField
+            control={form.control}
             name="copies"
-            min={0}
-            value={form.copies}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
+            rules={{
+              required: "Copies is required",
+              min: { value: 1, message: "At least 1 copy required" },
+            }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Copies</FormLabel>
+                <FormControl>
+                  <Input type="number" min={1} {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
 
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="available"
+          {/* Available */}
+          <FormField
+            control={form.control}
             name="available"
-            checked={form.available}
-            onChange={handleChange}
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked) => field.onChange(checked === true)}
+                  />
+                </FormControl>
+                <FormLabel className="font-normal">Available</FormLabel>
+              </FormItem>
+            )}
           />
-          <label htmlFor="available">Available</label>
-        </div>
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Add Book
-        </button>
-      </form>
+          <Button type="submit" className="w-full">
+            Add Book
+          </Button>
+        </form>
+      </Form>
     </div>
   );
 }

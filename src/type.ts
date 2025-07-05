@@ -9,3 +9,10 @@ export interface IBook {
   copies: number;
   available: boolean;
 }
+export interface IBorrowSummaryRecord {
+  book: {
+    title: string;
+    isbn: string;
+  };
+  totalQuantity: number;
+}
